@@ -18,7 +18,7 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        os: [windows-latest, ubuntu-latest, macos-13]
+        os: [windows-latest, ubuntu-latest, macos-latest]
         abi: [x86_64, x86, arm64-v8a, armeabi-v7a]
     runs-on: ${{matrix.os}}
 
@@ -35,7 +35,7 @@ jobs:
           "https://github.com/ninja-build/ninja/releases/download/v1.11.1/ninja-$suffix.zip"
         unzip ninja.zip -d "$HOME/bin"
 
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v6
       with:
         submodules: true
         lfs: true
@@ -50,7 +50,7 @@ jobs:
     - name: Install ${{matrix.abi}}
       run: cmake --install build/${{matrix.abi}}
     - name: Archive artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: android-${{matrix.os}}-${{matrix.abi}}
         path: ~/android/
@@ -59,7 +59,7 @@ jobs:
     timeout-minutes: 30
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-13]
+        os: [ubuntu-latest, macos-15-intel]
         abi: [x86_64]
     runs-on: ${{matrix.os}}
 
@@ -75,7 +75,7 @@ jobs:
           | sudo tee /etc/udev/rules.d/99-kvm4all.rules
         sudo udevadm control --reload-rules
         sudo udevadm trigger --name-match=kvm
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v6
       with:
         submodules: true
         lfs: true
@@ -84,7 +84,7 @@ jobs:
     - name: Build ${{matrix.abi}}
       run: cmake --build build/${{matrix.abi}} -v
     - name: AVD cache
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       id: avd-cache
       with:
         path: |
@@ -98,7 +98,7 @@ jobs:
         emulator-options: -no-window -gpu swiftshader_indirect -no-audio -no-boot-anim -camera-back none
         api-level: 21
         arch: ${{matrix.abi}}
-        ndk: 25.2.9519653
+        ndk: 29.0.14206865
         force-avd-creation: false
         disable-animations: false
         script: echo "Generated AVD snapshot for caching."
@@ -108,12 +108,12 @@ jobs:
         emulator-options: -no-snapshot-save -no-window -gpu swiftshader_indirect -no-audio -no-boot-anim -camera-back none
         api-level: 21
         arch: ${{matrix.abi}}
-        ndk: 25.2.9519653
+        ndk: 29.0.14206865
         force-avd-creation: false
         disable-animations: true
         script: sh android.sh build test ${{matrix.abi}}
     - name: Archive artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: android-testsuite-${{matrix.os}}-${{matrix.abi}}
         path: build/${{matrix.abi}}/testsuite/log.txt
